@@ -6,6 +6,7 @@ from babel.numbers import format_currency
 
 st.set_page_config(page_title="Car Price Predictor", layout="centered")
 
+# --- Load model and data ---
 try:
     with open('LinearModel.pkl', 'rb') as f:
         model = pickle.load(f)
@@ -14,29 +15,37 @@ except FileNotFoundError:
     st.error("Model or data files not found. Please run the model training script first to generate them.")
     st.stop()
 
+# --- Title and Info ---
 st.markdown("<h1 style='text-align: center; color: #1f77b4;'>Car Price Predictor</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center;'>Enter your car details below to estimate its current market value.</p>", unsafe_allow_html=True)
 st.markdown("---")
 
+# --- Dropdown Options ---
 companies = sorted(car_data['company'].unique())
 years = sorted(car_data['year'].unique(), reverse=True)
 fuel_types = car_data['fuel_type'].unique()
 
+# --- Brand selection OUTSIDE the form so model list updates dynamically ---
+company = st.selectbox("Enter the car brand name", companies, index=0)
+
+# Filter car models based on selected company
+car_models = sorted(car_data[car_data['company'] == company]['name'].unique())
+
+# --- Input Form ---
 with st.form("car_price_form"):
     col1, col2 = st.columns(2)
-    
+
     with col1:
-        company = st.selectbox("Car Company", companies)
-        year = st.selectbox("Year of Purchase", years)
-        kms_driven = st.number_input("Kilometres Driven", min_value=0, step=500, help="Total distance the car has travelled.")
-        
+        year = st.selectbox("Enter the year of purchase", years, index=0)
+        kms_driven = st.number_input("Enter the number of kilometers driven", min_value=0, step=500, help="Total distance the car has travelled.")
+
     with col2:
-        car_models = sorted(car_data[car_data['company'] == company]['name'].unique())
-        car_model = st.selectbox("Car Model", car_models)
-        fuel_type = st.selectbox("Fuel Type", fuel_types)
+        car_model = st.selectbox("Enter the car model name", car_models, index=0)
+        fuel_type = st.selectbox("Select the fuel type", fuel_types, index=0)
 
     submitted = st.form_submit_button("Predict Price")
 
+# --- Prediction ---
 if submitted:
     with st.spinner("Calculating estimated price..."):
         if kms_driven >= 0:
@@ -44,7 +53,6 @@ if submitted:
                 [[car_model, company, year, kms_driven, fuel_type]],
                 columns=['name', 'company', 'year', 'kms_driven', 'fuel_type']
             )
-            
             try:
                 prediction = model.predict(input_data)
                 predicted_price = np.round(prediction[0], 2)
