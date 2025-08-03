@@ -6,7 +6,6 @@ from babel.numbers import format_currency
 
 st.set_page_config(page_title="Car Price Predictor", layout="centered")
 
-# --- Load model and data ---
 try:
     with open('LinearModel.pkl', 'rb') as f:
         model = pickle.load(f)
@@ -15,23 +14,18 @@ except FileNotFoundError:
     st.error("Model or data files not found. Please run the model training script first to generate them.")
     st.stop()
 
-# --- Title and Info ---
 st.markdown("<h1 style='text-align: center; color: #1f77b4;'>Car Price Predictor</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center;'>Enter your car details below to estimate its current market value.</p>", unsafe_allow_html=True)
 st.markdown("---")
 
-# --- Dropdown Options ---
 companies = sorted(car_data['company'].unique())
 years = sorted(car_data['year'].unique(), reverse=True)
 fuel_types = car_data['fuel_type'].unique()
 
-# --- Brand selection OUTSIDE the form so model list updates dynamically ---
 company = st.selectbox("Enter the car brand name", companies, index=0)
 
-# Filter car models based on selected company
 car_models = sorted(car_data[car_data['company'] == company]['name'].unique())
 
-# --- Input Form ---
 with st.form("car_price_form"):
     col1, col2 = st.columns(2)
 
@@ -45,7 +39,6 @@ with st.form("car_price_form"):
 
     submitted = st.form_submit_button("Predict Price")
 
-# --- Prediction ---
 if submitted:
     with st.spinner("Calculating estimated price..."):
         if kms_driven >= 0:
